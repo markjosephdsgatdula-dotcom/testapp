@@ -1,325 +1,215 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Weld Checklist Prototype</title>
 <style>
-:root{--accent:#2b8cff;--bg:#f6f8fb}
-body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;margin:0;background:var(--bg);color:#111}
-header{background:#fff;border-bottom:1px solid #e6e9ef;padding:12px 16px;display:flex;align-items:center;gap:12px}
-header h1{font-size:16px;margin:0}
-.btn{background:var(--accent);color:white;padding:8px 10px;border-radius:8px;border:none;cursor:pointer}
-.btn.secondary{background:#6c757d}
-.container{display:flex;gap:16px;padding:14px}
-.left{flex:1;background:#fff;border-radius:10px;padding:12px;min-height:520px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start}
-.canvas-wrap{position:relative;border:1px dashed #ddd;width:100%;height:480px;display:flex;align-items:center;justify-content:center;background:#fafcff;overflow:hidden}
-#image{max-width:100%;max-height:100%;display:block;user-select:none;object-fit:contain}
-.marker{position:absolute;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;transform: translate(-50%,-50%);box-shadow:0 3px 8px rgba(43,140,255,0.25)}
-.marker.small{width:22px;height:22px;font-size:12px}
-.controls{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
-.right{width:300px;background:#fff;border-radius:10px;padding:12px;display:flex;flex-direction:column}
-.job-title{display:flex;gap:8px;align-items:center}
-input[type="text"]{flex:1;padding:8px;border-radius:6px;border:1px solid #ddd}
-.checklist{margin-top:12px;overflow:auto;flex:1;padding-right:6px}
-.item{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid #f0f0f0}
-.item.done .label{text-decoration:line-through;color:#888}
-.dot{width:18px;height:18px;border-radius:4px;border:2px solid #ddd;display:inline-block;text-align:center;line-height:16px;font-weight:700}
-footer{padding:10px 16px;font-size:13px;color:#555}
-.hint{font-size:13px;color:#666;margin-top:8px}
-label.file{background:#eef4ff;padding:8px;border-radius:8px;cursor:pointer}
-input[type="file"]{display:none}
-.small{font-size:12px;color:#666}
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: #f5f7fb;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+  }header {
+text-align: center;
+background-color: #007bff;
+color: white;
+font-size: 1.4em;
+padding: 10px 0;
+position: fixed;
+top: 0;
+width: 100%;
+z-index: 1000;
+}
+
+#canvasContainer {
+position: absolute;
+top: 60px;
+left: 120px;
+right: 120px;
+bottom: 50px;
+display: flex;
+justify-content: center;
+align-items: center;
+}
+
+canvas {
+border: 2px solid #007bff;
+max-width: 100%;
+max-height: 100%;
+background-color: white;
+}
+
+/* Left and Right Button Panels */
+.side-panel {
+position: fixed;
+top: 70px;
+width: 100px;
+display: flex;
+flex-direction: column;
+gap: 10px;
+}
+
+#leftPanel { left: 10px; }
+#rightPanel { right: 10px; }
+
+button {
+background-color: #007bff;
+color: white;
+border: none;
+border-radius: 10px;
+padding: 12px;
+font-size: 0.9em;
+cursor: pointer;
+box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+transition: background-color 0.2s;
+}
+
+button:hover {
+background-color: #005fcc;
+}
+
+#checkWeld {
+font-size: 1.1em;
+font-weight: bold;
+padding: 25px 12px;
+}
+
+footer {
+position: fixed;
+bottom: 5px;
+width: 100%;
+text-align: center;
+font-size: 0.85em;
+color: #555;
+}
 </style>
+
 </head>
-<body>
-<header>
-  <h1>Weld Checklist Prototype</h1>
-  <div style="margin-left:auto;display:flex;gap:8px">
-    <label class="btn secondary" id="btn-reset">Reset</label>
-    <label class="btn" id="btn-save">Save job</label>
-    <label class="btn" id="btn-download">Download JSON</label>
-  </div>
-</header>
+<body><header>Weld Checklist Prototype</header><!-- Left Panel Buttons --><div id="leftPanel" class="side-panel">
+  <button id="checkWeld" onclick="markNext()">Check Weld</button>
+  <button onclick="undoLast()">Undo Last</button>
+  <button onclick="uncheckAll()">Uncheck All</button>
+  <button onclick="removeAll()">Remove All</button>
+</div><!-- Right Panel Buttons --><div id="rightPanel" class="side-panel">
+  <button onclick="uploadImage()">Upload Drawing</button>
+  <button onclick="loadJSON()">Load Job</button>
+  <button onclick="downloadJSON()">Download JSON</button>
+</div><!-- Canvas Area --><div id="canvasContainer">
+  <canvas id="drawingCanvas"></canvas>
+</div><footer>Tap “Check Weld” or use your Bluetooth button to mark the next weld point.</footer><script>
+  const canvas = document.getElementById('drawingCanvas');
+  const ctx = canvas.getContext('2d');
+  let image = new Image();
+  let weldPoints = [];
 
-<div class="container">
-  <div class="left">
-    <div style="width:100%;display:flex;gap:8px;align-items:center;margin-bottom:8px">
-      <label class="file">
-        Upload drawing
-        <input id="file-input" type="file" accept="image/*">
-      </label>
-      <button class="btn" id="btn-load-json">Load job</button>
-      <input type="file" id="json-input" accept=".json" style="display:none">
-      <div style="margin-left:auto" class="small">Space = check next</div>
-    </div>
-
-    <div class="canvas-wrap" id="canvas-wrap">
-      <div id="empty-hint" class="small">Upload a drawing to begin. Click on the image to add weld points.</div>
-      <img id="image" alt="drawing" style="display:none"/>
-    </div>
-
-    <div class="controls">
-      <button class="btn secondary" id="btn-undo">Undo last</button>
-      <button class="btn secondary" id="btn-clear-markers">Clear markers</button>
-      <label class="small" id="marker-mode">Mode: Add markers</label>
-    </div>
-
-    <div class="hint">Tip: Take a screenshot of the SolidWorks drawing, upload here, click points in sequence, then press Space (or click) to mark them while welding.</div>
-  </div>
-
-  <div class="right">
-    <div class="job-title">
-      <input id="job-name" placeholder="Job name / part ID" />
-      <button class="btn" id="btn-export-png">Export PNG</button>
-    </div>
-
-    <div class="checklist" id="checklist">
-      <!-- items -->
-    </div>
-
-    <div style="margin-top:8px;display:flex;gap:8px">
-      <button class="btn" id="btn-reset-checks">Uncheck all</button>
-      <button class="btn secondary" id="btn-remove-all">Remove all</button>
-    </div>
-
-    <div style="margin-top:10px;font-size:13px;color:#666">
-      <div><strong>How it works</strong></div>
-      <div>- Click image: place numbered point & add to checklist</div>
-      <div>- Click checklist item: toggle done</div>
-      <div>- Press <strong>Space</strong>: mark next unchecked item (for Bluetooth-style demo)</div>
-      <div>- Save / Download JSON to keep job data</div>
-    </div>
-  </div>
-</div>
-
-<footer>
-  Prototype created for pitch demo. Ready for Bluetooth integration later.
-</footer>
-
-<script>
-(function(){
-  const imageEl = document.getElementById('image');
-  const canvasWrap = document.getElementById('canvas-wrap');
-  const fileInput = document.getElementById('file-input');
-  const checklistEl = document.getElementById('checklist');
-  const jobName = document.getElementById('job-name');
-  const emptyHint = document.getElementById('empty-hint');
-  const jsonInput = document.getElementById('json-input');
-  let markers = []; // {xRatio,yRatio,label,done,id}
-  let idCounter = 1;
-
-  // --- Image upload ---
-  function showImage(file){
-    const reader = new FileReader();
-  reader.onload = function(e) {
-    imageEl.src = e.target.result; // Base64 encoded string
-    imageEl.style.display = 'block';
-    emptyHint.style.display = 'none';
-    markers = [];
-    idCounter = 1;
-    renderAll();
-    saveToLocal();
-  };
-  reader.readAsDataURL(file); // <— change here
+  function resizeCanvas() {
+    const container = document.getElementById('canvasContainer');
+    canvas.width = container.clientWidth - 10;
+    canvas.height = container.clientHeight - 10;
+    redraw();
   }
 
-  fileInput.addEventListener('change', e=>{
-    if(e.target.files && e.target.files[0]){
-      showImage(e.target.files[0]);
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('load', resizeCanvas);
+
+  function uploadImage() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = e => {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        image.onload = () => redraw();
+        image.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click();
+  }
+
+  function redraw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (image.src) {
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
     }
-  });
-
-  canvasWrap.addEventListener('click', function(e){
-    if(!imageEl.src) return;
-    const rect = imageEl.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / imageEl.width;
-    const y = (e.clientY - rect.top) / imageEl.height;
-    if(x<0 || x>1 || y<0 || y>1) return;
-    addMarker(x,y);
-  });
-
-  function addMarker(xRatio,yRatio){
-    const label = idCounter++;
-    const id = 'm'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
-    markers.push({xRatio,yRatio,label,done:false,id});
-    renderAll();
-    saveToLocal();
-  }
-
-  function renderAll(){
-    document.querySelectorAll('.marker').forEach(n=>n.remove());
-    if(!imageEl.src) return;
-    markers.forEach(m=>{
-      const el = document.createElement('div');
-      el.className = 'marker';
-      if(m.done) el.style.opacity = 0.5;
-      el.textContent = m.label;
-      el.style.left = (m.xRatio*100) + '%';
-      el.style.top = (m.yRatio*100) + '%';
-      el.title = 'Point '+m.label + (m.done?' (done)':'');
-      el.dataset.id = m.id;
-      el.addEventListener('click', ev=>{
-        ev.stopPropagation();
-        toggleDoneById(m.id);
-      });
-      canvasWrap.appendChild(el);
-    });
-    renderChecklist();
-  }
-
-  function renderChecklist(){
-    checklistEl.innerHTML = '';
-    markers.forEach(m=>{
-      const row = document.createElement('div');
-      row.className = 'item' + (m.done?' done':'');
-      row.dataset.id = m.id;
-      const dot = document.createElement('div'); dot.className='dot'; dot.textContent=m.label;
-      dot.style.borderColor = m.done ? '#2ecc71' : '#ddd';
-      const labelEl = document.createElement('div'); labelEl.className='label'; labelEl.textContent='Weld '+m.label;
-      const spacer = document.createElement('div'); spacer.style.flex='1';
-      row.appendChild(dot); row.appendChild(labelEl); row.appendChild(spacer);
-      const btn = document.createElement('button');
-      btn.textContent = m.done?'Unchecked':'Check';
-      btn.className = m.done?'btn secondary':'btn';
-      btn.style.padding='6px 8px';
-      btn.addEventListener('click', ()=>toggleDoneById(m.id));
-      row.appendChild(btn);
-      checklistEl.appendChild(row);
+    weldPoints.forEach((p, i) => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+      ctx.fillStyle = p.checked ? '#007bff' : 'red';
+      ctx.fill();
+      ctx.closePath();
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 12px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(i + 1, p.x, p.y);
     });
   }
 
-  function toggleDoneById(id){
-    const m = markers.find(x=>x.id===id);
-    if(!m) return;
-    m.done=!m.done;
-    renderAll();
-    saveToLocal();
+  canvas.addEventListener('click', e => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    weldPoints.push({ x, y, checked: false });
+    redraw();
+  });
+
+  function markNext() {
+    const next = weldPoints.find(p => !p.checked);
+    if (next) next.checked = true;
+    redraw();
   }
 
-  // --- Mark next (Space) ---
-  function markNext(){
-    const next = markers.find(m=>!m.done);
-    if(next){ next.done=true; renderAll(); saveToLocal(); }
-    else alert('All weld points already checked.');
+  function undoLast() {
+    const lastChecked = [...weldPoints].reverse().find(p => p.checked);
+    if (lastChecked) lastChecked.checked = false;
+    redraw();
   }
 
-  // --- Buttons ---
-  document.getElementById('btn-reset-checks').addEventListener('click', ()=>{
-    markers.forEach(m=>m.done=false); renderAll(); saveToLocal();
-  });
+  function uncheckAll() {
+    weldPoints.forEach(p => p.checked = false);
+    redraw();
+  }
 
-  document.getElementById('btn-remove-all').addEventListener('click', ()=>{
-    if(!confirm('Remove all markers?')) return;
-    markers=[]; idCounter=1; renderAll(); saveToLocal();
-  });
+  function removeAll() {
+    weldPoints = [];
+    image.src = ''; // also remove the drawing
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
 
-  document.getElementById('btn-undo').addEventListener('click', ()=>{
-    markers.pop(); renderAll(); saveToLocal();
-  });
+  function loadJSON() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json';
+    input.onchange = e => {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        const data = JSON.parse(reader.result);
+        image.src = data.image;
+        weldPoints = data.points;
+        image.onload = () => redraw();
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }
 
-  document.getElementById('btn-clear-markers').addEventListener('click', ()=>{
-    markers=[]; renderAll(); saveToLocal();
-  });
-
-  document.getElementById('btn-reset').addEventListener('click', ()=>{
-    if(!confirm('Reset everything? This will remove all markers and uploaded image.')) return;
-    markers=[]; idCounter=1; imageEl.src=''; imageEl.style.display='none'; emptyHint.style.display='block';
-    checklistEl.innerHTML=''; jobName.value=''; localStorage.removeItem('weld_job_autosave');
-  });
-
-  document.getElementById('btn-download').addEventListener('click', ()=>{
-    if(!imageEl.src){ alert('Upload drawing first'); return; }
-    const job = makeJobObject();
-    const blob = new Blob([JSON.stringify(job,null,2)], {type:'application/json'});
+  function downloadJSON() {
+    const data = {
+      image: image.src,
+      points: weldPoints
+    };
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href=url; a.download=(jobName.value||'job')+'.json'; a.click();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'weld_job.json';
+    a.click();
     URL.revokeObjectURL(url);
-  });
-
-  document.getElementById('btn-save').addEventListener('click', ()=>{
-    saveToLocal();
-    alert('Job saved locally! (Reload page to restore)');
-  });
-
-  document.getElementById('btn-export-png').addEventListener('click', async ()=>{
-    if(!imageEl.src){ alert('Upload image first'); return; }
-    const canvas = document.createElement('canvas');
-    const w=imageEl.naturalWidth, h=imageEl.naturalHeight; canvas.width=w; canvas.height=h;
-    const ctx=canvas.getContext('2d'); ctx.drawImage(imageEl,0,0,w,h);
-    markers.forEach(m=>{
-      const x=m.xRatio*w, y=m.yRatio*h;
-      ctx.fillStyle='#1f6feb';
-      ctx.beginPath(); ctx.arc(x,y,Math.max(10,Math.round(w/80)),0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#fff'; ctx.font=(Math.max(10,Math.round(w/80)))+'px sans-serif';
-      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(m.label,x,y);
-    });
-    const url=canvas.toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download=(jobName.value||'job')+'-with-markers.png'; a.click();
-  });
-
-  // --- JSON Load ---
-  document.getElementById('btn-load-json').addEventListener('click', ()=>jsonInput.click());
-  jsonInput.addEventListener('change',(e)=>{
-    const f=e.target.files && e.target.files[0]; if(!f) return;
-    const reader = new FileReader();
-    reader.onload = function(){
-      try{
-        const job = JSON.parse(reader.result); applyJobObject(job); saveToLocal();
-      }catch(err){ alert('Invalid job file'); }
-    }
-    reader.readAsText(f);
-  });
-
-  // --- Drag & Drop ---
-  ['dragenter','dragover'].forEach(ev=>canvasWrap.addEventListener(ev,e=>{ e.preventDefault(); canvasWrap.style.borderColor='#cde'; }));
-  ['dragleave','drop'].forEach(ev=>canvasWrap.addEventListener(ev,e=>{ e.preventDefault(); canvasWrap.style.borderColor='#ddd'; }));
-  canvasWrap.addEventListener('drop', e=>{
-    e.preventDefault();
-    const f = e.dataTransfer.files && e.dataTransfer.files[0];
-    if(f && f.type.startsWith('image/')) showImage(f);
-  });
-
-  // --- Keyboard ---
-window.addEventListener('keydown', e => {
-    // Only when not typing in an input
-    if (document.activeElement.tagName !== 'INPUT') {
-
-        // Spacebar
-        if (e.code === 'Space') {
-            e.preventDefault();
-            markNext();
-        }
-
-        // Volume Up (Bluetooth selfie button)
-        else if (e.key === 'AudioVolumeUp') {   // <-- may need to adjust if iPad reports differently
-            e.preventDefault();
-            markNext();
-        }
-
-    }
-});
-
-  // --- LocalStorage ---
-  function saveToLocal(){ try{ const job=makeJobObject(); localStorage.setItem('weld_job_autosave',JSON.stringify(job)); }catch(e){} }
-  function loadFromLocal(){
-    try{
-      const raw=localStorage.getItem('weld_job_autosave');
-      if(raw){ const job=JSON.parse(raw); applyJobObject(job); }
-    }catch(e){}
   }
-
-  function makeJobObject(){ return {name:jobName.value||'', imageDataURL:imageEl.src||null, markers, created:new Date().toISOString()}; }
-
-  function applyJobObject(job){
-    if(!job) return;
-    jobName.value = job.name||'';
-    if(job.imageDataURL){ imageEl.src = job.imageDataURL; imageEl.style.display='block'; emptyHint.style.display='none'; }
-    markers = job.markers || [];
-    const maxLabel = Math.max(0,...markers.map(m=>m.label||0));
-    idCounter = maxLabel+1;
-    renderAll();
-  }
-
-  loadFromLocal();
-})();
-</script>
+</script></body>
+</html>
