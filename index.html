@@ -166,56 +166,57 @@ color: #555;
 function markNext() {
   const next = weldPoints.find(p => !p.checked);
 
-  // If there's still an unchecked weld
   if (next) {
     next.checked = true;
     redraw();
     clickSound.currentTime = 0;
     clickSound.play();
-  } 
-  // If all welds are already done
-  else {
-    completeSound.currentTime = 0;
-    completeSound.play();
 
-    // Create message overlay
-    const message = document.createElement('div');
-    message.textContent = "✅ All welds are completed!";
-    message.style.position = "fixed";
-    message.style.top = "50%";
-    message.style.left = "50%";
-    message.style.transform = "translate(-50%, -50%)";
-    message.style.fontSize = "28px";
-    message.style.fontWeight = "bold";
-    message.style.color = "#fff";
-    message.style.padding = "20px 40px";
-    message.style.borderRadius = "12px";
-    message.style.background = "rgba(0,0,0,0.6)";
-    message.style.zIndex = "9999";
-    document.body.appendChild(message);
-
-    // Flash effect (red & green)
-    let flashCount = 0;
-    const flashInterval = setInterval(() => {
-      document.body.style.backgroundColor =
-        flashCount % 2 === 0 ? "#28a745" : "#ff0000";
-      flashCount++;
-    }, 200);
-
-    // Stop everything after 1 second
-    setTimeout(() => {
-      clearInterval(flashInterval);
-      document.body.style.backgroundColor = "";
-      message.remove();
-
-      // Stop the sound
-      completeSound.pause();
+    // ✅ Check if this was the last weld
+    const allChecked = weldPoints.every(p => p.checked);
+    if (allChecked) {
+      // Play complete sound
       completeSound.currentTime = 0;
+      completeSound.play();
 
-      // Uncheck all welds for next round
-      weldPoints.forEach(p => p.checked = false);
-      redraw();
-    }, 1000);
+      // Show message
+      const message = document.createElement('div');
+      message.textContent = "✅ All welds are completed!";
+      message.style.position = "fixed";
+      message.style.top = "50%";
+      message.style.left = "50%";
+      message.style.transform = "translate(-50%, -50%)";
+      message.style.fontSize = "28px";
+      message.style.fontWeight = "bold";
+      message.style.color = "#fff";
+      message.style.padding = "20px 40px";
+      message.style.borderRadius = "12px";
+      message.style.background = "rgba(0,0,0,0.6)";
+      message.style.zIndex = "9999";
+      document.body.appendChild(message);
+
+      // Flash effect (green & red)
+      let flashCount = 0;
+      const flashInterval = setInterval(() => {
+        document.body.style.backgroundColor =
+          flashCount % 2 === 0 ? "#28a745" : "#ff0000";
+        flashCount++;
+      }, 200);
+
+      // Stop after 1 second
+      setTimeout(() => {
+        clearInterval(flashInterval);
+        document.body.style.backgroundColor = "";
+        message.remove();
+
+        completeSound.pause();
+        completeSound.currentTime = 0;
+
+        // Reset welds for next round
+        weldPoints.forEach(p => p.checked = false);
+        redraw();
+      }, 1000);
+    }
   }
 }
 
