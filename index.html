@@ -87,22 +87,22 @@ color: #555;
 </style>
 
 </head>
-<body><header>Weld Checklist Prototype</header><!-- Left Panel Buttons --><div id="leftPanel" class="side-panel">
-  <button id="checkWeld" onclick="markNext()" style="margin-bottom: 72px;">Check Weld</button>
-  <button onclick="undoLast()">Undo Last</button>
-  <button onclick="uncheckAll()">Uncheck All</button>
-  <button onclick="deleteLastMarker()">Delete Last Marker</button>
-  <button onclick="removeAll()">Remove All</button>
+<body><header>溶接チェックリスト試作版</header><!-- Left Panel Buttons --><div id="leftPanel" class="side-panel">
+  <button id="checkWeld" onclick="markNext()" style="margin-bottom: 72px;">溶接チェック</button>
+  <button onclick="undoLast()">最後を解除</button>
+  <button onclick="uncheckAll()">全て解除</button>
+  <button onclick="deleteLastMarker()">最後のマーカー削除</button>
+  <button onclick="removeAll()">すべて削除</button>
 </div><!-- Right Panel Buttons --><div id="rightPanel" class="side-panel">
-  <button onclick="uploadImage()">Upload Drawing</button>
-  <button onclick="loadJSON()">Load Job</button>
-  <button onclick="downloadJSON()">Download JSON</button>
+  <button onclick="uploadImage()">図面をアップロード</button>
+  <button onclick="loadJSON()">ファイルを読み込み</button>
+  <button onclick="downloadJSON()">ファイルを保存</button>
 </div><!-- Canvas Area --><div id="canvasContainer">
   <canvas id="drawingCanvas"></canvas>
   <audio id="clickSound" src="weldBeep.mp3" preload="auto"></audio>
   <audio id="completeSound" src="doneBeep.mp3" preload="auto"></audio>
 
-</div><footer>Tap “Check Weld” or use your button to mark the next weld point.</footer><script>
+</div><footer>「溶接チェック」をタップするか、ボタンを押して次の溶接ポイントをマークしてください。</footer><script>
   const canvas = document.getElementById('drawingCanvas');
   const ctx = canvas.getContext('2d');
   const clickSound = document.getElementById("clickSound");
@@ -181,7 +181,7 @@ function markNext() {
 
       // Show message
       const message = document.createElement('div');
-      message.textContent = "✅ All welds are completed!";
+      message.textContent = "✅ 全ての溶接が完了しました！";
       message.style.position = "fixed";
       message.style.top = "50%";
       message.style.left = "50%";
