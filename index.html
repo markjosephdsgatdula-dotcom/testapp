@@ -1,282 +1,326 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Weld Checklist Prototype</title>
-<style>
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    background-color: #f5f7fb;
-    font-family: Arial, sans-serif;
-    overflow: hidden;
-  }header {
-text-align: center;
-background-color: #007bff;
-color: white;
-font-size: 1.4em;
-padding: 10px 0;
-position: fixed;
-top: 0;
-width: 100%;
-z-index: 1000;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weld Checklist Prototype</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #f5f7fb;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
 
-#canvasContainer {
-position: absolute;
-top: 60px;
-left: 120px;
-right: 120px;
-bottom: 50px;
-display: flex;
-justify-content: center;
-align-items: center;
-}
+        header {
+            text-align: center;
+            background-color: #007bff;
+            color: white;
+            font-size: 1.4em;
+            padding: 10px 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
 
-canvas {
-border: 2px solid #007bff;
-max-width: 100%;
-max-height: 100%;
-background-color: white;
-}
+        #canvasContainer {
+            position: absolute;
+            top: 60px;
+            left: 120px;
+            right: 120px;
+            bottom: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-/* Left and Right Button Panels */
-.side-panel {
-position: fixed;
-top: 70px;
-width: 100px;
-display: flex;
-flex-direction: column;
-gap: 10px;
-}
+        canvas {
+            border: 2px solid #007bff;
+            max-width: 100%;
+            max-height: 100%;
+            background-color: white;
+        }
 
-#leftPanel { left: 10px; }
-#rightPanel { right: 10px; }
+        /* Left and Right Button Panels */
+        .side-panel {
+            position: fixed;
+            top: 70px;
+            width: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
 
-button {
-background-color: #007bff;
-color: white;
-border: none;
-border-radius: 10px;
-padding: 12px;
-font-size: 0.9em;
-cursor: pointer;
-box-shadow: 0 3px 5px rgba(0,0,0,0.2);
-transition: background-color 0.2s;
-}
+        #leftPanel {
+            left: 10px;
+        }
 
-button:hover {
-background-color: #005fcc;
-}
+        #rightPanel {
+            right: 10px;
+        }
 
-#checkWeld {
-font-size: 1.1em;
-font-weight: bold;
-padding: 25px 12px;
-}
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 0.9em;
+            cursor: pointer;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s;
+        }
 
-footer {
-position: fixed;
-bottom: 5px;
-width: 100%;
-text-align: center;
-font-size: 0.85em;
-color: #555;
-}
-</style>
+        button:hover {
+            background-color: #005fcc;
+        }
+
+        #checkWeld {
+            font-size: 1.1em;
+            font-weight: bold;
+            padding: 25px 12px;
+        }
+
+        footer {
+            position: fixed;
+            bottom: 5px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.85em;
+            color: #555;
+        }
+    </style>
 
 </head>
-<body><header>溶接チェックリスト試作版</header><!-- Left Panel Buttons --><div id="leftPanel" class="side-panel">
-  <button id="checkWeld" onclick="markNext()" style="margin-bottom: 72px;">溶接チェック</button>
-  <button onclick="undoLast()">最後を解除</button>
-  <button onclick="uncheckAll()">全て解除</button>
-  <button onclick="deleteLastMarker()">最後のマーカー削除</button>
-  <button onclick="removeAll()">すべて削除</button>
-</div><!-- Right Panel Buttons --><div id="rightPanel" class="side-panel">
-  <button onclick="uploadImage()">図面をアップロード</button>
-  <button onclick="loadJSON()">ファイルを読み込み</button>
-  <button onclick="downloadJSON()">ファイルを保存</button>
-</div><!-- Canvas Area --><div id="canvasContainer">
-  <canvas id="drawingCanvas"></canvas>
-  <audio id="clickSound" src="weldBeep.mp3" preload="auto"></audio>
-  <audio id="completeSound" src="doneBeep.mp3" preload="auto"></audio>
 
-</div><footer>「溶接チェック」をタップするか、ボタンを押して次の溶接ポイントをマークしてください。</footer><script>
-  const canvas = document.getElementById('drawingCanvas');
-  const ctx = canvas.getContext('2d');
-  const clickSound = document.getElementById("clickSound");
-  const completeSound = document.getElementById("completeSound");
-  let image = new Image();
-  let weldPoints = [];
+<body>
+    <header>溶接チェックリスト試作版</header><!-- Left Panel Buttons -->
+    <div id="leftPanel" class="side-panel">
+        <button id="checkWeld" onclick="markNext()" style="margin-bottom: 72px;">溶接チェック</button>
+        <button onclick="undoLast()">最後を解除</button>
+        <button onclick="uncheckAll()">全て解除</button>
+        <button onclick="deleteLastMarker()">最後のマーカー削除</button>
+        <button onclick="removeAll()">すべて削除</button>
+    </div><!-- Right Panel Buttons -->
+    <div id="rightPanel" class="side-panel">
+        <button onclick="uploadImage()">図面をアップロード</button>
+        <button onclick="loadJSON()">ファイルを読み込み</button>
+        <button onclick="downloadJSON()">ファイルを保存</button>
+    </div><!-- Canvas Area -->
+    <div id="canvasContainer">
+        <canvas id="drawingCanvas"></canvas>
+        <audio id="clickSound" src="weldBeep.mp3" preload="auto"></audio>
+        <audio id="completeSound" src="doneBeep.mp3" preload="auto"></audio>
 
-  function resizeCanvas() {
-    const container = document.getElementById('canvasContainer');
-    canvas.width = container.clientWidth - 10;
-    canvas.height = container.clientHeight - 10;
-    redraw();
-  }
+    </div>
+    <footer>「溶接チェック」をタップするか、ボタンを押して次の溶接ポイントをマークしてください。</footer>
+    <script>
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+        const clickSound = document.getElementById("clickSound");
+        const completeSound = document.getElementById("completeSound");
+        let image = new Image();
+        let weldPoints = [];
 
-  window.addEventListener('resize', resizeCanvas);
-  window.addEventListener('load', resizeCanvas);
+        function resizeCanvas() {
+            const container = document.getElementById('canvasContainer');
+            canvas.width = container.clientWidth - 10;
+            canvas.height = container.clientHeight - 10;
+            redraw();
+        }
 
-  function uploadImage() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = e => {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        image.onload = () => redraw();
-        image.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-    };
-    input.click();
-  }
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('load', resizeCanvas);
 
-  function redraw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (image.src) {
-      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-    }
-    weldPoints.forEach((p, i) => {
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
-      ctx.fillStyle = p.checked ? '#007bff' : 'red';
-      ctx.fill();
-      ctx.closePath();
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 12px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(i + 1, p.x, p.y);
-    });
-  }
+        function uploadImage() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = () => {
+                    image.onload = () => redraw();
+                    image.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+            };
+            input.click();
+        }
+        function updateHighlight() {
+            // Remove old highlight
+            weldPoints.forEach(p => p.highlight = false);
 
-  canvas.addEventListener('click', e => {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    weldPoints.push({ x, y, checked: false });
-    redraw();
-  });
-
-function markNext() {
-  const next = weldPoints.find(p => !p.checked);
-
-  if (next) {
-    next.checked = true;
-    redraw();
-    clickSound.currentTime = 0;
-    clickSound.play();
-
-    // ✅ Check if this was the last weld
-    const allChecked = weldPoints.every(p => p.checked);
-    if (allChecked) {
-      // Play complete sound
-      completeSound.currentTime = 0;
-      completeSound.play();
-
-      // Show message
-      const message = document.createElement('div');
-      message.textContent = "✅ 全ての溶接が完了しました！";
-      message.style.position = "fixed";
-      message.style.top = "50%";
-      message.style.left = "50%";
-      message.style.transform = "translate(-50%, -50%)";
-      message.style.fontSize = "28px";
-      message.style.fontWeight = "bold";
-      message.style.color = "#fff";
-      message.style.padding = "20px 40px";
-      message.style.borderRadius = "12px";
-      message.style.background = "rgba(0,0,0,0.6)";
-      message.style.zIndex = "9999";
-      document.body.appendChild(message);
-
-      // Flash effect (green & red)
-      let flashCount = 0;
-      const flashInterval = setInterval(() => {
-        document.body.style.backgroundColor =
-          flashCount % 2 === 0 ? "#28a745" : "#ff0000";
-        flashCount++;
-      }, 200);
-
-      // Stop after 1 second
-      setTimeout(() => {
-        clearInterval(flashInterval);
-        document.body.style.backgroundColor = "";
-        message.remove();
-
-        completeSound.pause();
-        completeSound.currentTime = 0;
-
-        // Reset welds for next round
-        weldPoints.forEach(p => p.checked = false);
-        redraw();
-      }, 1000);
-    }
-  }
-}
+            // Highlight first unchecked point
+            const next = weldPoints.find(p => !p.checked);
+            if (next) next.highlight = true;
+        }
 
 
+        function redraw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (image.src) {
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            }
+            weldPoints.forEach((p, i) => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 10, 0, Math.PI * 2);
+                if (p.checked) {
+                    ctx.fillStyle = '#007bff';    // blue
+                } else if (p.highlight) {
+                    ctx.fillStyle = 'yellow';     // yellow
+                } else {
+                    ctx.fillStyle = 'red';        // red
+                }
 
-  function undoLast() {
-    const lastChecked = [...weldPoints].reverse().find(p => p.checked);
-    if (lastChecked) lastChecked.checked = false;
-    redraw();
-  }
-  
-  function deleteLastMarker() {
-  if (weldPoints.length > 0) {
-    weldPoints.pop();  // remove last marker
-    redraw();          // refresh canvas
-  }
-  }
+                ctx.fill();
+                ctx.closePath();
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(i + 1, p.x, p.y);
+            });
+        }
+
+        canvas.addEventListener('click', e => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            weldPoints.push({ x, y, checked: false, highlight: false });
+            updateHighlight();
+            redraw();
+
+        });
+
+        function markNext() {
+            const next = weldPoints.find(p => !p.checked);
+
+            if (next) {
+                next.checked = true;
+                clickSound.currentTime = 0;
+                clickSound.play();
+                redraw();
+            }
+
+            // Check if all done
+            const allChecked = weldPoints.every(p => p.checked);
+            if (allChecked && weldPoints.length > 0) {
+                completeSound.currentTime = 0;
+                completeSound.play();
+
+                const message = document.createElement('div');
+                message.textContent = "✅ 全ての溶接が完了しました！";
+                message.style.position = "fixed";
+                message.style.top = "50%";
+                message.style.left = "50%";
+                message.style.transform = "translate(-50%, -50%)";
+                message.style.fontSize = "28px";
+                message.style.fontWeight = "bold";
+                message.style.color = "#fff";
+                message.style.padding = "20px 40px";
+                message.style.borderRadius = "12px";
+                message.style.background = "rgba(0,0,0,0.6)";
+                message.style.zIndex = "9999";
+                document.body.appendChild(message);
+
+                let flashCount = 0;
+                const flashInterval = setInterval(() => {
+                    document.body.style.backgroundColor =
+                        flashCount % 2 === 0 ? "#28a745" : "#ff0000";
+                    flashCount++;
+                }, 200);
+
+                setTimeout(() => {
+                    clearInterval(flashInterval);
+                    document.body.style.backgroundColor = "";
+                    message.remove();
+
+                    completeSound.pause();
+                    completeSound.currentTime = 0;
+
+                    weldPoints.forEach(p => p.checked = false);
+                    updateHighlight();
+                    redraw();
+                }, 1000);
+
+                return; // stop here
+            }
+
+            // highlight next after checking
+            updateHighlight();
+            redraw();
+        }
 
 
-  function uncheckAll() {
-    weldPoints.forEach(p => p.checked = false);
-    redraw();
-  }
 
-  function removeAll() {
-    weldPoints = [];
-    image.src = ''; // also remove the drawing
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }
 
-  function loadJSON() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json';
-    input.onchange = e => {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        const data = JSON.parse(reader.result);
-        image.src = data.image;
-        weldPoints = data.points;
-        image.onload = () => redraw();
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  }
+        function undoLast() {
+            const lastChecked = [...weldPoints].reverse().find(p => p.checked);
+            if (lastChecked) lastChecked.checked = false;
+            updateHighlight();
+            redraw();
+        }
 
-  function downloadJSON() {
-    const data = {
-      image: image.src,
-      points: weldPoints
-    };
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'weld_job.json';
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-</script></body>
+        function deleteLastMarker() {
+            if (weldPoints.length > 0) {
+                weldPoints.pop();  // remove last marker
+                updateHighlight();
+                redraw();          // refresh canvas
+            }
+        }
+
+
+        function uncheckAll() {
+            weldPoints.forEach(p => p.checked = false);
+            updateHighlight();
+            redraw();
+        }
+
+        function removeAll() {
+            weldPoints = [];
+            image.src = ''; // also remove the drawing
+            updateHighlight();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function loadJSON() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const data = JSON.parse(reader.result);
+                    image.src = data.image;
+                    weldPoints = data.points;
+                    image.onload = () => redraw();
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function downloadJSON() {
+            const data = {
+                image: image.src,
+                points: weldPoints
+            };
+            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'weld_job.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+
 </html>
